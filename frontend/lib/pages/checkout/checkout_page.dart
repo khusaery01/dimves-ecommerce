@@ -19,7 +19,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
   final TextEditingController voucherController = TextEditingController();
   final TextEditingController noteController = TextEditingController();
 
-  String paymentMethod = "Cash"; // Cash/COD, QRIS, Transfer
+  String paymentMethod = "QRIS"; // Default ke QRIS karena Cash tidak boleh untuk dine_in & delivery
   String orderType = "delivery"; // dine_in, takeaway, delivery
 
   bool isLoading = false;
@@ -29,7 +29,27 @@ class _CheckoutPageState extends State<CheckoutPage> {
   @override
   void initState() {
     super.initState();
-    addressController.text = "Jl. Kedai Dimves No. 12, Outlet Utama";
+    tableController.text = "01";
+    _loadUserAddress();
+  }
+
+  Future<void> _loadUserAddress() async {
+    try {
+      final user = await ApiService().getProfile();
+      if (user["address"] != null && user["address"].toString().isNotEmpty) {
+        setState(() {
+          addressController.text = user["address"];
+        });
+      } else {
+        setState(() {
+          addressController.text = "";
+        });
+      }
+    } catch (e) {
+      setState(() {
+        addressController.text = "";
+      });
+    }
   }
 
   Future<void> checkVoucher() async {
@@ -194,7 +214,12 @@ class _CheckoutPageState extends State<CheckoutPage> {
                     ),
                     onSelected: (val) {
                       if (val) {
-                        setState(() => orderType = "delivery");
+                        setState(() {
+                          orderType = "delivery";
+                          if (paymentMethod == "Cash") {
+                            paymentMethod = "QRIS";
+                          }
+                        });
                         cart.setOrderType("delivery");
                       }
                     },
@@ -212,7 +237,15 @@ class _CheckoutPageState extends State<CheckoutPage> {
                     ),
                     onSelected: (val) {
                       if (val) {
-                        setState(() => orderType = "dine_in");
+                        setState(() {
+                          orderType = "dine_in";
+                          if (tableController.text.isEmpty) {
+                            tableController.text = "01";
+                          }
+                          if (paymentMethod == "Cash") {
+                            paymentMethod = "QRIS";
+                          }
+                        });
                         cart.setOrderType("dine_in");
                       }
                     },
@@ -230,7 +263,9 @@ class _CheckoutPageState extends State<CheckoutPage> {
                     ),
                     onSelected: (val) {
                       if (val) {
-                        setState(() => orderType = "takeaway");
+                        setState(() {
+                          orderType = "takeaway";
+                        });
                         cart.setOrderType("takeaway");
                       }
                     },
@@ -240,22 +275,32 @@ class _CheckoutPageState extends State<CheckoutPage> {
             ),
             const SizedBox(height: 20),
 
-            // Input No Meja jika Dine-In
+            // Input No Meja jika Dine-In (Dropdown Pilihan Meja 01 s/d 09)
             if (orderType == "dine_in") ...[
               const Text(
                 "Nomor Meja",
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
-              TextField(
-                controller: tableController,
+              DropdownButtonFormField<String>(
+                value: tableController.text.isEmpty ? "01" : tableController.text,
                 decoration: InputDecoration(
-                  hintText: "Masukkan Nomor Meja (Contoh: A04)",
                   prefixIcon: const Icon(Icons.table_restaurant),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
+                items: ["01", "02", "03", "04", "05", "06", "07", "08", "09"]
+                    .map((t) => DropdownMenuItem(
+                          value: t,
+                          child: Text("Meja $t"),
+                        ))
+                    .toList(),
+                onChanged: (value) {
+                  setState(() {
+                    tableController.text = value ?? "01";
+                  });
+                },
               ),
               const SizedBox(height: 20),
             ],
@@ -263,7 +308,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
             // Input Alamat jika Delivery
             if (orderType == "delivery") ...[
               const Text(
-                "Alamat Pengiriman",
+                "Masukan alamat anda",
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
@@ -271,7 +316,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                 controller: addressController,
                 maxLines: 2,
                 decoration: InputDecoration(
-                  hintText: "Masukkan alamat lengkap...",
+                  hintText: "Masukkan alamat lengkap Anda...",
                   prefixIcon: const Icon(Icons.location_on),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -331,17 +376,18 @@ class _CheckoutPageState extends State<CheckoutPage> {
             ],
             const SizedBox(height: 20),
 
-            // Metode Pembayaran (Cash, QRIS, Transfer)
+            // Metode Pembayaran (Cash hanya untuk takeaway, QRIS & Transfer untuk semuanya)
             const Text(
               "Metode Pembayaran",
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
-            RadioListTile(
-              value: "Cash",
-              groupValue: paymentMethod,
-              onChanged: (value) => setState(() => paymentMethod = value!),
-              title: const Text("Tunai / COD (Kasir / Bayar di Tempat)"),
-            ),
+            if (orderType == "takeaway")
+              RadioListTile(
+                value: "Cash",
+                groupValue: paymentMethod,
+                onChanged: (value) => setState(() => paymentMethod = value!),
+                title: const Text("Tunai / Cash (Bayar di Kasir)"),
+              ),
             RadioListTile(
               value: "QRIS",
               groupValue: paymentMethod,
@@ -361,7 +407,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                   border: Border.all(color: const Color(0xFFE53935), width: 1.5),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.red.withOpacity(0.08),
+                      color: Colors.red.withValues(alpha: 0.08),
                       blurRadius: 10,
                       offset: const Offset(0, 4),
                     ),
@@ -389,7 +435,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                     ),
                     const SizedBox(height: 10),
                     const Text(
-                      "Tunjukkan bukti pembayaran kepada kasir",
+                      "Tunjukkan bukti pembayaran kepada kasir / kurir",
                       style: TextStyle(fontSize: 12, color: Colors.grey),
                       textAlign: TextAlign.center,
                     ),
@@ -402,7 +448,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
               value: "Transfer",
               groupValue: paymentMethod,
               onChanged: (value) => setState(() => paymentMethod = value!),
-              title: const Text("Transfer Bank"),
+              title: const Text("Transfer Bank (Virtual Account / TF Manual)"),
             ),
             const SizedBox(height: 20),
 

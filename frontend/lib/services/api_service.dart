@@ -128,12 +128,18 @@ class ApiService {
     required String name,
     required String email,
     required String password,
+    String? phone,
   }) async {
     try {
       final response = await http.post(
         Uri.parse("$baseUrl/register"),
         headers: _jsonHeaders(),
-        body: jsonEncode({"name": name, "email": email, "password": password}),
+        body: jsonEncode({
+          "name": name,
+          "email": email,
+          "password": password,
+          if (phone != null && phone.isNotEmpty) "phone": phone,
+        }),
       ).timeout(const Duration(seconds: 15));
 
       final data = jsonDecode(response.body);
@@ -205,6 +211,42 @@ class ApiService {
     );
 
     return response.statusCode == 200;
+  }
+
+  Future<Map<String, dynamic>> changePassword({
+    required String oldPassword,
+    required String newPassword,
+  }) async {
+    try {
+      final token = await getToken();
+
+      final response = await http.put(
+        Uri.parse("$baseUrl/change-password"),
+        headers: _jsonHeaders(token),
+        body: jsonEncode({
+          "old_password": oldPassword,
+          "new_password": newPassword,
+        }),
+      ).timeout(const Duration(seconds: 15));
+
+      final data = jsonDecode(response.body);
+      if (response.statusCode == 200 && data["success"] == true) {
+        return {
+          "success": true,
+          "message": data["message"] ?? "Password berhasil diperbarui.",
+        };
+      }
+
+      return {
+        "success": false,
+        "message": data["message"] ?? "Gagal mengubah password.",
+      };
+    } catch (e) {
+      return {
+        "success": false,
+        "message": "Terjadi kesalahan koneksi.",
+      };
+    }
   }
 
   // ================= CHECKOUT =================

@@ -119,16 +119,17 @@ class FeaturedMenuSectionState extends State<FeaturedMenuSection> {
                   itemBuilder: (context, index) {
                     final menu = displayMenus[index];
 
-                    return GestureDetector(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => DetailMenuPage(menu: menu),
-                          ),
-                        );
-                      },
-                      child: Container(
+                    return RepaintBoundary(
+                      child: GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => DetailMenuPage(menu: menu),
+                            ),
+                          );
+                        },
+                        child: Container(
                         width: 210,
                         margin: const EdgeInsets.only(right: 18),
                         decoration: BoxDecoration(
@@ -221,7 +222,6 @@ class FeaturedMenuSectionState extends State<FeaturedMenuSection> {
                                           ),
                                         ),
                                       ),
-
                                       // Tombol tambah ke keranjang
                                       _AddToCartButton(menu: menu),
                                     ],
@@ -232,7 +232,8 @@ class FeaturedMenuSectionState extends State<FeaturedMenuSection> {
                           ],
                         ),
                       ),
-                    );
+                    ),
+                  );
                   },
                 ),
               );

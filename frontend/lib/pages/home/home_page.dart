@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
+import '../../core/app_colors.dart';
 import '../../widgets/home/about_section.dart';
 import '../../widgets/home/contact_section.dart';
 import '../../widgets/home/drink_section.dart';
@@ -8,6 +10,7 @@ import '../../widgets/home/promo_section.dart';
 import '../../widgets/home/testimonial_section.dart';
 import '../cart/cart_page.dart';
 import '../menu/menu_page.dart';
+import '../../providers/cart_provider.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -18,27 +21,9 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   final ScrollController _scrollController = ScrollController();
-  double _scrollOffset = 0.0;
-
-  @override
-  void initState() {
-    super.initState();
-    _scrollController.addListener(_onScroll);
-  }
-
-  void _onScroll() {
-    final offset = _scrollController.offset;
-
-    if ((offset - _scrollOffset).abs() > 2) {
-      setState(() {
-        _scrollOffset = offset;
-      });
-    }
-  }
 
   @override
   void dispose() {
-    _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
     super.dispose();
   }
@@ -48,9 +33,6 @@ class _HomePageState extends State<HomePage> {
     const double bannerHeight = 480.0;
     const double overlapOffset = 90.0;
     const double contentTopOffset = bannerHeight - overlapOffset;
-
-    // Transition top bar background to solid red as content scrolls beneath it
-    final double headerBgOpacity = (_scrollOffset / 180.0).clamp(0.0, 1.0);
 
     return Scaffold(
       backgroundColor: const Color(0xFF111111),
@@ -230,29 +212,38 @@ class _HomePageState extends State<HomePage> {
             top: 0,
             left: 0,
             right: 0,
-            child: Container(
-              decoration: BoxDecoration(
-                color: Color.fromRGBO(229, 57, 53, headerBgOpacity),
-                gradient: headerBgOpacity == 0
-                    ? const LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Color.fromARGB(180, 0, 0, 0),
-                          Colors.transparent,
-                        ],
-                      )
-                    : null,
-                boxShadow: headerBgOpacity > 0.8
-                    ? [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.1),
-                          blurRadius: 6,
-                          offset: const Offset(0, 2),
-                        ),
-                      ]
-                    : null,
-              ),
+            child: AnimatedBuilder(
+              animation: _scrollController,
+              builder: (context, child) {
+                final double offset = _scrollController.hasClients ? _scrollController.offset : 0.0;
+                final double headerBgOpacity = (offset / 180.0).clamp(0.0, 1.0);
+
+                return Container(
+                  decoration: BoxDecoration(
+                    color: Color.fromRGBO(229, 57, 53, headerBgOpacity),
+                    gradient: headerBgOpacity == 0
+                        ? const LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              Color.fromARGB(180, 0, 0, 0),
+                              Colors.transparent,
+                            ],
+                          )
+                        : null,
+                    boxShadow: headerBgOpacity > 0.8
+                        ? [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.1),
+                              blurRadius: 6,
+                              offset: const Offset(0, 2),
+                            ),
+                          ]
+                        : null,
+                  ),
+                  child: child,
+                );
+              },
               child: SafeArea(
                 bottom: false,
                 child: Padding(
@@ -286,17 +277,34 @@ class _HomePageState extends State<HomePage> {
                         ],
                       ),
                       const Spacer(),
-                      IconButton(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (_) => const CartPage()),
+                      Consumer<CartProvider>(
+                        builder: (context, cartProvider, child) {
+                          final int itemCount = cartProvider.totalItem;
+                          return Badge(
+                            label: Text(
+                              itemCount.toString(),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            isLabelVisible: itemCount > 0,
+                            backgroundColor: AppColors.primary,
+                            child: IconButton(
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder: (_) => const CartPage()),
+                                );
+                              },
+                              icon: const Icon(
+                                Icons.shopping_cart_outlined,
+                                color: Colors.white,
+                              ),
+                            ),
                           );
                         },
-                        icon: const Icon(
-                          Icons.shopping_cart_outlined,
-                          color: Colors.white,
-                        ),
                       ),
                     ],
                   ),

@@ -13,9 +13,13 @@ class AdminOrderController extends Controller
      */
     public function index(Request $request)
     {
+        // Hanya tampilkan pesanan aktif (waiting, preparing, ready) — tanpa served
+        // Urutkan: waiting → preparing → ready, lalu terlama lebih dulu
         $orders = Order::with(['user', 'items.menu', 'items.variants'])
-            ->latest()
-            ->paginate(15);
+            ->whereIn('kitchen_status', ['waiting', 'preparing', 'ready'])
+            ->orderByRaw("FIELD(kitchen_status, 'waiting', 'preparing', 'ready')")
+            ->oldest()
+            ->get();
 
         // Untuk AJAX polling di layar dapur
         if ($request->wantsJson() || $request->ajax()) {

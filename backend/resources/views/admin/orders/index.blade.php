@@ -1,4 +1,4 @@
-﻿@extends('admin.layouts.app')
+@extends('admin.layouts.app')
 
 @section('title', 'Kitchen Display')
 @section('page-title', '🔥 Kitchen Display')
@@ -48,6 +48,8 @@
     .info-row strong { color: #0f172a; font-size: 16px; font-weight: 800; }
     .empty-state { text-align: center; padding: 80px 20px; }
     .empty-icon { width: 80px; height: 80px; background: rgba(6,182,212,0.08); border-radius: 20px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 30px; color: #06b6d4; }
+    .voucher-badge { display: inline-flex; align-items: center; gap: 5px; background: rgba(34,197,94,0.10); border: 1px solid rgba(34,197,94,0.25); color: #15803d; font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 20px; letter-spacing: 0.3px; }
+    .voucher-row { background: rgba(34,197,94,0.05); border: 1px solid rgba(34,197,94,0.15); border-radius: 8px; padding: 8px 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
 </style>
 @endsection
 
@@ -59,7 +61,12 @@
         <p class="mb-0" style="font-size:13px;color:#94a3b8;">
             <i class="fa-solid fa-rotate fa-spin me-1" style="color:#06b6d4;"></i>
             Auto-refresh setiap 10 detik
-            &nbsp;·&nbsp; <span style="color:#06b6d4;font-weight:600;">{{ $orders->total() }} pesanan</span>
+            &nbsp;·&nbsp;
+            <span style="color:#f59e0b;font-weight:600;">{{ $orders->where('kitchen_status','waiting')->count() }} waiting</span>
+            &nbsp;·&nbsp;
+            <span style="color:#3b82f6;font-weight:600;">{{ $orders->where('kitchen_status','preparing')->count() }} preparing</span>
+            &nbsp;·&nbsp;
+            <span style="color:#22c55e;font-weight:600;">{{ $orders->where('kitchen_status','ready')->count() }} ready</span>
         </p>
     </div>
     <div class="d-flex gap-2">
@@ -120,6 +127,21 @@
                         <i class="fa-solid fa-comment-dots me-1"></i> <strong>Catatan:</strong> {{ $order->notes }}
                     </div>
                 @endif
+                @if($order->voucher_code)
+                <div class="voucher-row">
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <span class="voucher-badge"><i class="fa-solid fa-ticket"></i> {{ $order->voucher_code }}</span>
+                        <span style="font-size:11.5px;color:#64748b;">Voucher dipakai</span>
+                    </div>
+                    @if($order->discount_amount > 0)
+                    <span style="font-size:12px;font-weight:700;color:#16a34a;">-Rp {{ number_format($order->discount_amount, 0, ',', '.') }}</span>
+                    @endif
+                </div>
+                @endif
+                <div class="info-row"><span>Subtotal</span><span style="font-size:12px;color:#475569;">Rp {{ number_format($order->total_price, 0, ',', '.') }}</span></div>
+                @if($order->discount_amount > 0)
+                <div class="info-row"><span style="color:#16a34a;">Diskon Voucher</span><span style="font-size:12px;font-weight:600;color:#16a34a;">-Rp {{ number_format($order->discount_amount, 0, ',', '.') }}</span></div>
+                @endif
                 <div class="info-row"><span>Pembayaran</span><span style="font-size:12px;font-weight:600;color:#475569;">{{ $order->payment_method }}</span></div>
                 <div class="info-row"><span>Total</span><strong>Rp {{ number_format($order->grand_total > 0 ? $order->grand_total : $order->total_price, 0, ',', '.') }}</strong></div>
             </div>
@@ -155,8 +177,6 @@
     </div>
     @endforelse
 </div>
-
-<div class="d-flex justify-content-center mt-4">{{ $orders->links() }}</div>
 
 @endsection
 

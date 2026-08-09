@@ -115,16 +115,17 @@ class _DrinkSectionState extends State<DrinkSection> {
                   itemBuilder: (context, index) {
                     final drink = displayDrinks[index];
 
-                    return GestureDetector(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => DetailMenuPage(menu: drink),
-                          ),
-                        );
-                      },
-                      child: Container(
+                    return RepaintBoundary(
+                      child: GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => DetailMenuPage(menu: drink),
+                            ),
+                          );
+                        },
+                        child: Container(
                         width: 210,
                         margin: const EdgeInsets.only(right: 18),
                         decoration: BoxDecoration(
@@ -228,7 +229,8 @@ class _DrinkSectionState extends State<DrinkSection> {
                           ],
                         ),
                       ),
-                    );
+                    ),
+                  );
                   },
                 ),
               );

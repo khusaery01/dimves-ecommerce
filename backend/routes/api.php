@@ -38,6 +38,7 @@ Route::middleware('auth:sanctum')->group(function () {
         return response()->json($request->user());
     });
     Route::put('/profile', [AuthController::class, 'updateProfile']);
+    Route::put('/change-password', [AuthController::class, 'changePassword']);
 
     // Voucher Check
     Route::post('/vouchers/check', [VoucherController::class, 'check']);

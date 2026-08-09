@@ -104,7 +104,7 @@ class _OrderPageState extends State<OrderPage> {
           return RefreshIndicator(
             onRefresh: () async => _loadOrders(),
             child: ListView.builder(
-              padding: const EdgeInsets.all(15),
+              padding: const EdgeInsets.only(left: 15, right: 15, top: 15, bottom: 120),
               itemCount: data.length,
               itemBuilder: (context, index) {
                 final order = data[index];

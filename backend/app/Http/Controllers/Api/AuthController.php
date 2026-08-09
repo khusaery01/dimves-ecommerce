@@ -121,4 +121,36 @@ class AuthController extends Controller
             'user'    => $user,
         ]);
     }
+
+    // CHANGE PASSWORD
+    public function changePassword(Request $request)
+    {
+        $request->validate([
+            'old_password' => 'required',
+            'new_password' => 'required|min:6',
+        ], [
+            'old_password.required' => 'Password lama wajib diisi.',
+            'new_password.required' => 'Password baru wajib diisi.',
+            'new_password.min'      => 'Password baru minimal 6 karakter.',
+        ]);
+
+        /** @var \App\Models\User $user */
+        $user = $request->user();
+
+        if (!Hash::check($request->old_password, $user->password)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Password lama tidak cocok/salah.',
+            ], 400);
+        }
+
+        $user->update([
+            'password' => Hash::make($request->new_password),
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Password berhasil diperbarui.',
+        ]);
+    }
 }

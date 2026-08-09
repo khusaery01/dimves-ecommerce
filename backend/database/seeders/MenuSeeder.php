@@ -209,18 +209,41 @@ class MenuSeeder extends Seeder
             ],
 
             [
-                'category_id' => 2,
-                'name' => 'Aquviva',
-                'description' => 'Air Mineral',
-                'price' => 6000,
+                'id' => 101,
+                'category_id' => 1,
+                'name' => 'Paket Solo Komplit',
+                'description' => '1 Box Dimsum Original + 1 Es Redves Segar',
+                'price' => 22000,
                 'stock' => 100,
-                'image' => 'aquviva.jpg',
+                'image' => 'dimsum-original.jpg',
+                'status' => true,
+            ],
+
+            [
+                'id' => 102,
+                'category_id' => 1,
+                'name' => 'Paket Duaan Mesra',
+                'description' => '1 Dimsum Mentai + 1 Dimsum BBQ + 2 Thai Tea',
+                'price' => 49000,
+                'stock' => 100,
+                'image' => 'mentai.jpg',
+                'status' => true,
+            ],
+
+            [
+                'id' => 103,
+                'category_id' => 1,
+                'name' => 'Paket Rame-Rame Pesta',
+                'description' => '4 Box All Varian Dimsum + 4 Minuman Favorit',
+                'price' => 99000,
+                'stock' => 100,
+                'image' => 'bangkok.jpg',
                 'status' => true,
             ],
         ];
 
         foreach ($menus as $menu) {
-            Menu::create($menu);
+            Menu::forceCreate($menu);
         }
     }
 }
